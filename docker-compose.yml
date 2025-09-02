@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Django web application
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-for-development
+      - DB_NAME=alx_travel_db
+      - DB_USER=alx_travel_user
+      - DB_PASSWORD=alx_travel_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+    depends_on:
+      - db
+      - redis
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Celery worker
+  celery_worker:
+    build: .
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-for-development
+      - DB_NAME=alx_travel_db
+      - DB_USER=alx_travel_user
+      - DB_PASSWORD=alx_travel_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    command: celery -A alx_travel_app worker -l info
+
+  # Celery beat scheduler
+  celery_beat:
+    build: .
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-for-development
+      - DB_NAME=alx_travel_db
+      - DB_USER=alx_travel_user
+      - DB_PASSWORD=alx_travel_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    command: celery -A alx_travel_app beat -l info
+
+  # PostgreSQL database
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=alx_travel_db
+      - POSTGRES_USER=alx_travel_user
+      - POSTGRES_PASSWORD=alx_travel_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_volume:
+  static_volume:

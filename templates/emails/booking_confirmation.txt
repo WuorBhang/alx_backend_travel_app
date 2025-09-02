@@ -1,0 +1,37 @@
+🎉 BOOKING CONFIRMED! 🎉
+
+Dear {{ user.first_name }},
+
+Your adventure awaits! We're excited to confirm your booking for an amazing trip.
+
+BOOKING DETAILS:
+- Booking ID: #{{ booking.id }}
+- Booking Date: {{ booking_date }}
+- Number of People: {{ booking.number_of_people }}
+- Total Amount: ${{ booking.total_price }}
+{% if booking.special_requests %}- Special Requests: {{ booking.special_requests }}{% endif %}
+
+TRIP INFORMATION:
+- Trip: {{ trip.title }}
+- Destination: {{ destination.name }}, {{ destination.country }}
+- Start Date: {{ trip_start }}
+- End Date: {{ trip_end }}
+- Duration: {{ trip.duration_days }} days
+- Trip Type: {{ trip.get_trip_type_display }}
+
+WHAT HAPPENS NEXT:
+1. You'll receive a detailed itinerary 7 days before departure
+2. Our team will contact you to confirm final details
+3. Any special requests will be reviewed and confirmed
+
+We can't wait to make your travel dreams come true!
+
+If you have any questions, please contact us at support@alx-travel.com
+
+Thank you for choosing ALX Travel App!
+
+Best regards,
+The ALX Travel Team
+
+---
+© 2025 ALX Travel App. All rights reserved.
