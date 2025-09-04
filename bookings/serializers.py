@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Booking, BookingHistory
-from trips.serializers import TripListSerializer
 
 
 class BookingHistorySerializer(serializers.ModelSerializer):
@@ -17,14 +16,14 @@ class BookingHistorySerializer(serializers.ModelSerializer):
 
 class BookingListSerializer(serializers.ModelSerializer):
     """Serializer for listing bookings"""
-    trip = TripListSerializer(read_only=True)
     can_cancel = serializers.ReadOnlyField()
     is_active = serializers.ReadOnlyField()
-    
+    trip_title = serializers.CharField(source='trip.title', read_only=True)
+
     class Meta:
         model = Booking
         fields = [
-            'id', 'trip', 'number_of_people', 'total_price', 'status',
+            'id', 'trip', 'trip_title', 'number_of_people', 'total_price', 'status',
             'booking_date', 'can_cancel', 'is_active', 'created_at'
         ]
         read_only_fields = ['id', 'total_price', 'booking_date', 'created_at']
@@ -32,15 +31,15 @@ class BookingListSerializer(serializers.ModelSerializer):
 
 class BookingDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed booking view"""
-    trip = TripListSerializer(read_only=True)
     history = BookingHistorySerializer(many=True, read_only=True)
     can_cancel = serializers.ReadOnlyField()
     is_active = serializers.ReadOnlyField()
-    
+    trip_title = serializers.CharField(source='trip.title', read_only=True)
+
     class Meta:
         model = Booking
         fields = [
-            'id', 'trip', 'number_of_people', 'total_price', 'status',
+            'id', 'trip', 'trip_title', 'number_of_people', 'total_price', 'status',
             'booking_date', 'confirmation_date', 'cancellation_date',
             'special_requests', 'contact_phone', 'contact_email',
             'can_cancel', 'is_active', 'history', 'created_at', 'updated_at'
@@ -69,13 +68,11 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         
         if trip and number_of_people:
             # Check if trip can be booked
-            if not trip.can_book():
-                raise serializers.ValidationError(
-                    "This trip cannot be booked at the moment"
-                )
+            if hasattr(trip, 'can_book') and not trip.can_book():
+                raise serializers.ValidationError("This trip cannot be booked at the moment")
             
             # Check if there are enough spots
-            if trip.available_spots < number_of_people:
+            if hasattr(trip, 'available_spots') and trip.available_spots < number_of_people:
                 raise serializers.ValidationError(
                     f"Only {trip.available_spots} spots available for this trip"
                 )
@@ -113,7 +110,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 class BookingUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating bookings"""
-    
+        
     class Meta:
         model = Booking
         fields = [
@@ -130,7 +127,7 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
             # Calculate additional spots needed
             additional_needed = new_number - current_number
             
-            if additional_needed > 0 and trip.available_spots < additional_needed:
+            if hasattr(trip, 'available_spots') and additional_needed > 0 and trip.available_spots < additional_needed:
                 raise serializers.ValidationError(
                     f"Not enough spots available. Only {trip.available_spots} spots left."
                 )
@@ -140,7 +137,7 @@ class BookingUpdateSerializer(serializers.ModelSerializer):
 
 class BookingStatusUpdateSerializer(serializers.ModelSerializer):
     """Serializer for updating booking status (admin only)"""
-    
+        
     class Meta:
         model = Booking
         fields = ['status']
@@ -151,13 +148,7 @@ class BookingStatusUpdateSerializer(serializers.ModelSerializer):
         
         # Prevent invalid status transitions
         if old_status == 'completed' and value != 'completed':
-            raise serializers.ValidationError(
-                "Cannot change status of completed booking"
-            )
-        
+            raise serializers.ValidationError("Cannot change status of completed booking")
         if old_status == 'cancelled' and value not in ['cancelled', 'confirmed']:
-            raise serializers.ValidationError(
-                "Cancelled booking can only be confirmed or remain cancelled"
-            )
-        
+            raise serializers.ValidationError("Cancelled booking can only be confirmed or remain cancelled")
         return value

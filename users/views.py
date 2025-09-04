@@ -7,6 +7,8 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.utils import timezone
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from .models import UserProfile
 from .serializers import (
@@ -16,6 +18,18 @@ from .serializers import (
 )
 
 
+@swagger_auto_schema(
+    method='post',
+    operation_description="Register a new user account",
+    request_body=UserRegistrationSerializer,
+    responses={
+        201: UserSerializer,
+        400: openapi.Response('Bad Request', openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+        ))
+    }
+)
 class UserRegistrationView(generics.CreateAPIView):
     """User registration view"""
     queryset = User.objects.all()
@@ -26,6 +40,31 @@ class UserRegistrationView(generics.CreateAPIView):
 class UserLoginView(ObtainAuthToken):
     """Custom login view that returns user data with token"""
     
+    @swagger_auto_schema(
+        operation_description="Login user and return authentication token with user data",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING)
+            },
+            required=['username', 'password']
+        ),
+        responses={
+            200: openapi.Response('Login Success', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'token': openapi.Schema(type=openapi.TYPE_STRING),
+                    'user': UserSerializer,
+                    'profile': UserProfileSerializer
+                }
+            )),
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
@@ -43,6 +82,19 @@ class UserLogoutView(generics.GenericAPIView):
     """User logout view"""
     permission_classes = [IsAuthenticated]
     
+    @swagger_auto_schema(
+        operation_description="Logout user and delete authentication token",
+        responses={
+            200: openapi.Response('Logout Success', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'message': openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            500: openapi.Response('Internal Server Error', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     def post(self, request):
         try:
             # Delete the token
@@ -57,7 +109,12 @@ class UserLogoutView(generics.GenericAPIView):
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
-    """ViewSet for user profile management"""
+    """
+    ViewSet for user profile management
+    
+    Allows users to view and update their own profile information.
+    Users can only access their own profile data.
+    """
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
@@ -74,12 +131,29 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         """Get current user's profile"""
         return self.request.user.profile
     
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Get current user's profile information",
+        responses={200: UserProfileSerializer}
+    )
     @action(detail=False, methods=['get'])
     def me(self, request):
         """Get current user's profile"""
         serializer = self.get_serializer(request.user.profile)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        methods=['put', 'patch'],
+        operation_description="Update current user's profile information",
+        request_body=UserProfileUpdateSerializer,
+        responses={
+            200: UserProfileUpdateSerializer,
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     @action(detail=False, methods=['put', 'patch'])
     def update_me(self, request):
         """Update current user's profile"""
@@ -93,7 +167,12 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for user information (read-only)"""
+    """
+    ViewSet for user information (read-only)
+    
+    Provides read-only access to user information.
+    Users can only access their own user data.
+    """
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
@@ -102,12 +181,29 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     
     serializer_class = UserSerializer
     
+    @swagger_auto_schema(
+        method='get',
+        operation_description="Get current user's basic information",
+        responses={200: UserSerializer}
+    )
     @action(detail=False, methods=['get'])
     def me(self, request):
         """Get current user's information"""
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
     
+    @swagger_auto_schema(
+        methods=['put', 'patch'],
+        operation_description="Update current user's basic information",
+        request_body=UserUpdateSerializer,
+        responses={
+            200: UserUpdateSerializer,
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     @action(detail=False, methods=['put', 'patch'])
     def update_me(self, request):
         """Update current user's information"""
@@ -124,6 +220,23 @@ class ChangePasswordView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
     
+    @swagger_auto_schema(
+        operation_description="Change user password",
+        request_body=ChangePasswordSerializer,
+        responses={
+            200: openapi.Response('Password Changed', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING),
+                    'token': openapi.Schema(type=openapi.TYPE_STRING)
+                }
+            )),
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         
@@ -149,6 +262,20 @@ class PasswordResetRequestView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = PasswordResetRequestSerializer
     
+    @swagger_auto_schema(
+        operation_description="Request password reset for a user account",
+        request_body=PasswordResetRequestSerializer,
+        responses={
+            200: openapi.Response('Reset Request Sent', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'message': openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         
@@ -170,6 +297,20 @@ class PasswordResetConfirmView(generics.GenericAPIView):
     permission_classes = [AllowAny]
     serializer_class = PasswordResetConfirmSerializer
     
+    @swagger_auto_schema(
+        operation_description="Confirm password reset with token",
+        request_body=PasswordResetConfirmSerializer,
+        responses={
+            200: openapi.Response('Password Reset Success', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'message': openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         

@@ -15,7 +15,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,*.onrender.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -136,36 +136,46 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
-# Celery Configuration
-CELERY_BROKER_URL = config('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-
-# Email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
-
 # Swagger settings
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
         'Bearer': {
             'type': 'apiKey',
             'name': 'Authorization',
-            'in': 'header'
+            'in': 'header',
+            'description': 'Token-based authentication with required prefix "Token"'
         }
-    }
+    },
+    'USE_SESSION_AUTH': False,
+    'LOGIN_URL': None,
+    'LOGOUT_URL': None,
+    'DEEP_LINKING': True,
+    'PERSIST_AUTH': True,
+    'REFETCH_SCHEMA_WITH_AUTH': True,
+    'REFETCH_SCHEMA_ON_LOGOUT': True,
+    'DEFAULT_MODELS_DEPTH': 3,
 }
+
+# Redoc settings
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
+    'HIDE_HOSTNAME': False,
+    'EXPAND_RESPONSES': ['200', '201'],
+}
+
+# CORS settings for frontend integration
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000'
+).split(',')
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Additional security settings for production
+if not DEBUG:
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
