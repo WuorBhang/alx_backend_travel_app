@@ -122,3 +122,8 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
         return attrs
+
+
+class LogoutSerializer(serializers.Serializer):
+    """Serializer for logout endpoint (no fields required)"""
+    pass

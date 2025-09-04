@@ -1,36 +1,41 @@
-# 🌍 ALX Travel App
+# ALX Travel App Backend
 
-A modern, robust travel booking platform backend system built with Django REST Framework. This project enables users to discover exciting destinations and seamlessly book trips online through a secure, scalable, and automated API.
+A comprehensive travel booking platform API built with Django REST Framework, featuring full Swagger/OpenAPI documentation and ready for deployment on Render.
 
-## 🎯 Features
+## 🚀 Features
 
-- **Trip Listings**: Browse curated travel packages with detailed information
-- **Smart Booking System**: Real-time reservation with capacity tracking and overbooking prevention
-- **User Accounts**: Secure registration, login, and profile management
-- **Automated Email Notifications**: Instant confirmations using Celery background tasks
-- **Public API Documentation**: Interactive Swagger UI for developers and testers
-- **Production-Ready Deployment**: Fully deployed with environment security and scalable architecture
+- **User Authentication & Management**: Registration, login, profile management
+- **Trip Management**: Browse, search, and filter travel packages
+- **Booking System**: Create, manage, and track bookings
+- **Admin Panel**: Full administrative interface
+- **API Documentation**: Interactive Swagger UI and ReDoc
+- **Production Ready**: Configured for Render deployment
 
-## 🚀 Quick Start
+## 📚 API Documentation
+
+Once deployed, access the interactive API documentation at:
+- **Swagger UI**: `https://your-app.onrender.com/swagger/`
+- **ReDoc**: `https://your-app.onrender.com/redoc/`
+- **JSON Schema**: `https://your-app.onrender.com/swagger.json`
+
+## 🛠 Local Development Setup
 
 ### Prerequisites
-
 - Python 3.8+
 - PostgreSQL (for production) or SQLite (for development)
-- Redis (for Celery)
-- Virtual environment tool (venv or virtualenv)
+- Virtual environment
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone <your-repo-url>
    cd alx_backend_travel_app
    ```
 
 2. **Create and activate virtual environment**
    ```bash
-   python3 -m venv venv
+   python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
@@ -41,11 +46,11 @@ A modern, robust travel booking platform backend system built with Django REST F
 
 4. **Set up environment variables**
    ```bash
-   cp env.example .env
-   # Edit .env with your configuration
+   cp .env.example .env
+   # Edit .env with your settings
    ```
 
-5. **Run database migrations**
+5. **Run migrations**
    ```bash
    python manage.py makemigrations
    python manage.py migrate
@@ -56,255 +61,157 @@ A modern, robust travel booking platform backend system built with Django REST F
    python manage.py createsuperuser
    ```
 
-7. **Start the development server**
+7. **Collect static files**
+   ```bash
+   python manage.py collectstatic
+   ```
+
+8. **Run development server**
    ```bash
    python manage.py runserver
    ```
 
-8. **Start Celery worker (in new terminal)**
-   ```bash
-   celery -A alx_travel_app worker -l info
-   ```
+Visit `http://localhost:8000/swagger/` to access the API documentation.
 
-9. **Start Celery beat scheduler (in new terminal)**
-   ```bash
-   celery -A alx_travel_app beat -l info
-   ```
+## 🌐 Deployment on Render
 
-### Using Docker
+Follow the detailed [Deployment Guide](DEPLOYMENT_GUIDE.md) for step-by-step instructions.
 
-1. **Build and start services**
-   ```bash
-   docker-compose up --build
-   ```
+### Quick Deployment Steps
 
-2. **Run migrations**
-   ```bash
-   docker-compose exec web python manage.py migrate
-   ```
+1. **Create PostgreSQL Database on Render**
+2. **Create Web Service on Render**
+3. **Configure Environment Variables**
+4. **Deploy**
 
-3. **Create superuser**
-   ```bash
-   docker-compose exec web python manage.py createsuperuser
-   ```
+### Required Environment Variables
+```bash
+SECRET_KEY=your_secret_key_here
+DEBUG=False
+ALLOWED_HOSTS=your-app.onrender.com,*.onrender.com
+DATABASE_URL=postgresql://username:password@host:port/database
+```
 
-## 🌐 API Endpoints
+## 📖 API Endpoints
 
 ### Authentication
 - `POST /api/v1/auth/register/` - User registration
-- `POST /api/v1/auth/login/` - User login
-- `POST /api/v1/auth/logout/` - User logout
+- `POST /api/v1/auth/login/` - Login
+- `POST /api/v1/auth/logout/` - Logout
 - `POST /api/v1/auth/change-password/` - Change password
-- `POST /api/v1/auth/reset-password/` - Request password reset
-- `POST /api/v1/auth/reset-password/confirm/` - Confirm password reset
 
 ### Trips
-- `GET /api/v1/trips/` - List all trips
-- `GET /api/v1/trips/{id}/` - Get trip details
-- `GET /api/v1/trips/featured/` - Get featured trips
-- `GET /api/v1/trips/upcoming/` - Get upcoming trips
-- `GET /api/v1/trips/search/?q={query}` - Search trips
-- `GET /api/v1/trips/{id}/availability/` - Check trip availability
-
-### Destinations
-- `GET /api/v1/destinations/` - List all destinations
-- `GET /api/v1/destinations/{id}/` - Get destination details
+- `GET /api/v1/trips/` - List trips (with filtering)
+- `GET /api/v1/trips/featured/` - Featured trips
+- `GET /api/v1/trips/search/?q=query` - Search trips
+- `GET /api/v1/trips/{id}/availability/` - Trip availability
 
 ### Bookings
-- `GET /api/v1/bookings/` - List user's bookings
-- `POST /api/v1/bookings/` - Create new booking
-- `GET /api/v1/bookings/{id}/` - Get booking details
-- `PUT /api/v1/bookings/{id}/` - Update booking
+- `POST /api/v1/bookings/` - Create booking
+- `GET /api/v1/bookings/my_bookings/` - User's bookings
 - `POST /api/v1/bookings/{id}/cancel/` - Cancel booking
-- `POST /api/v1/bookings/{id}/confirm/` - Confirm booking
-- `GET /api/v1/bookings/my_bookings/` - Get current user's bookings
-- `GET /api/v1/bookings/active/` - Get active bookings
-- `GET /api/v1/bookings/upcoming/` - Get upcoming bookings
-- `GET /api/v1/bookings/past/` - Get past bookings
+- `GET /api/v1/bookings/upcoming/` - Upcoming bookings
 
-### User Profile
-- `GET /api/v1/profiles/me/` - Get current user's profile
-- `PUT /api/v1/profiles/me/` - Update current user's profile
-- `GET /api/v1/users/me/` - Get current user's information
-- `PUT /api/v1/users/me/` - Update current user's information
+### User Management
+- `GET /api/v1/users/me/` - Get user info
+- `GET /api/v1/profiles/me/` - Get user profile
+- `PUT /api/v1/profiles/update_me/` - Update profile
 
-## 📚 API Documentation
+## 🔧 Project Structure
 
-Access the interactive Swagger documentation at:
-- **Swagger UI**: `/swagger/`
-- **ReDoc**: `/redoc/`
-
-## 🗄️ Database Models
-
-### Trip
-- Basic trip information (title, description, type)
-- Destination relationship
-- Pricing and capacity management
-- Date ranges and availability tracking
-- Image and gallery support
-
-### Destination
-- Location details (name, country, description)
-- Image support
-- Metadata tracking
-
-### Booking
-- User and trip relationships
-- Booking details (people count, total price)
-- Status management (pending, confirmed, cancelled, completed)
-- Special requests and contact information
-- Automatic capacity updates
-
-### UserProfile
-- Extended user information
-- Travel preferences and settings
-- Notification preferences
-- Contact details
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file based on `env.example`:
-
-```bash
-# Django Settings
-SECRET_KEY=your-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=your-domain.com,www.your-domain.com
-
-# Database
-DB_NAME=alx_travel_db
-DB_USER=alx_travel_user
-DB_PASSWORD=your-secure-password
-DB_HOST=localhost
-DB_PORT=5432
-
-# Celery
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/0
-
-# Email
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-DEFAULT_FROM_EMAIL=your-email@gmail.com
+```
+alx_backend_travel_app/
+├── alx_travel_app/          # Main Django project
+│   ├── settings.py          # Django settings
+│   ├── urls.py             # Main URL configuration
+│   └── wsgi.py             # WSGI configuration
+├── bookings/               # Booking management app
+│   ├── models.py           # Booking models
+│   ├── views.py            # API views
+│   ├── serializers.py      # DRF serializers
+│   └── urls.py             # App URLs
+├── trips/                  # Trip management app
+│   ├── models.py           # Trip and destination models
+│   ├── views.py            # API views
+│   ├── serializers.py      # DRF serializers
+│   └── urls.py             # App URLs
+├── users/                  # User management app
+│   ├── models.py           # User profile models
+│   ├── views.py            # API views
+│   ├── serializers.py      # DRF serializers
+│   └── urls.py             # App URLs
+├── requirements.txt        # Python dependencies
+├── build.sh               # Render build script
+├── .env                   # Environment variables
+└── manage.py              # Django management script
 ```
 
-## 🚀 Deployment
+## 🔐 Authentication
 
-### Production Deployment
-
-1. **Set up production server**
-   - Use a production-ready server (AWS, DigitalOcean, etc.)
-   - Install Python, PostgreSQL, Redis, and Nginx
-
-2. **Configure environment**
-   - Set `DEBUG=False`
-   - Configure production database
-   - Set up SSL certificates
-   - Configure email settings
-
-3. **Deploy with Gunicorn**
-   ```bash
-   gunicorn --bind 0.0.0.0:8000 alx_travel_app.wsgi:application
-   ```
-
-4. **Set up Nginx reverse proxy**
-   - Configure static file serving
-   - Set up SSL termination
-   - Configure proxy to Gunicorn
-
-5. **Start Celery services**
-   ```bash
-   celery -A alx_travel_app worker -l info
-   celery -A alx_travel_app beat -l info
-   ```
-
-### Using the Build Script
+The API uses Token-based authentication. Include the token in requests:
 
 ```bash
-chmod +x build.sh
-./build.sh
+curl -H "Authorization: Token your_token_here" \
+     https://your-app.onrender.com/api/v1/trips/
+```
+
+## 📊 API Features
+
+### Filtering & Search
+- **Trips**: Filter by type, destination, price range, dates
+- **Bookings**: Filter by status, trip type
+- **Search**: Full-text search across trips and destinations
+
+### Pagination
+All list endpoints support pagination:
+- `page`: Page number
+- `page_size`: Items per page (default: 20)
+
+### Response Format
+```json
+{
+  "count": 100,
+  "next": "https://api.example.com/trips/?page=3",
+  "previous": "https://api.example.com/trips/?page=1",
+  "results": [...]
+}
 ```
 
 ## 🧪 Testing
 
-Run the test suite:
-
+Run tests with:
 ```bash
 python manage.py test
 ```
 
-## 📧 Email Templates
-
-The system includes comprehensive email templates for:
-- Booking confirmations
-- Status updates
-- Trip reminders
-- Welcome messages
-- Daily summaries
-
-Templates are located in `templates/emails/` and support both HTML and plain text formats.
-
-## 🔒 Security Features
-
-- Token-based authentication
-- CORS protection
-- CSRF protection
-- Secure password validation
-- Environment variable configuration
-- Admin-only access to sensitive operations
-
-## 📊 Monitoring and Logging
-
-- Celery task monitoring
-- Database query optimization
-- Error logging and tracking
-- Performance metrics
-
-## 🚀 Future Enhancements
-
-- [ ] Online payment integration (Stripe/PayPal)
-- [ ] Trip reviews and ratings system
-- [ ] Mobile app development
-- [ ] Multi-language support
-- [ ] Real-time chat support
-- [ ] Advanced analytics dashboard
-- [ ] Social media integration
-- [ ] Loyalty program
-
-## 🤝 Contributing
+## 📝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests for new functionality
+4. Add tests if applicable
 5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 👨‍💻 Author
-
-**Bhang Wuor** - *Full Stack Developer*
-
-## 🙏 Acknowledgments
-
-- Django and Django REST Framework communities
-- ALX Software Engineering program
-- Open source contributors
+This project is licensed under the MIT License.
 
 ## 📞 Support
 
 For support and questions:
-- Email: contact@alx-travel.com
-- Documentation: `/swagger/`
-- Issues: GitHub Issues
+- Email: uhuribhang211@gmail.com
+- Documentation: [API Documentation](api_documentation.md)
+- Deployment Guide: [Deployment Guide](DEPLOYMENT_GUIDE.md)
+
+## 🔄 Version History
+
+- **v1.0.0**: Initial release with full API documentation and Render deployment support
 
 ---
 
-**🌍 Travel begins with a single click. We built the engine behind it.**
+**Note**: Make sure to activate your virtual environment before running Django commands:
+```bash
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver

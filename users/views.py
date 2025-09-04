@@ -14,27 +14,29 @@ from .models import UserProfile
 from .serializers import (
     UserSerializer, UserProfileSerializer, UserProfileUpdateSerializer,
     UserRegistrationSerializer, UserUpdateSerializer, ChangePasswordSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer, LogoutSerializer
 )
 
 
-@swagger_auto_schema(
-    method='post',
-    operation_description="Register a new user account",
-    request_body=UserRegistrationSerializer,
-    responses={
-        201: UserSerializer,
-        400: openapi.Response('Bad Request', openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
-        ))
-    }
-)
 class UserRegistrationView(generics.CreateAPIView):
     """User registration view"""
     queryset = User.objects.all()
     serializer_class = UserRegistrationSerializer
     permission_classes = [AllowAny]
+    
+    @swagger_auto_schema(
+        operation_description="Register a new user account",
+        request_body=UserRegistrationSerializer,
+        responses={
+            201: UserSerializer,
+            400: openapi.Response('Bad Request', openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={'error': openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 class UserLoginView(ObtainAuthToken):
@@ -81,6 +83,7 @@ class UserLoginView(ObtainAuthToken):
 class UserLogoutView(generics.GenericAPIView):
     """User logout view"""
     permission_classes = [IsAuthenticated]
+    serializer_class = LogoutSerializer
     
     @swagger_auto_schema(
         operation_description="Logout user and delete authentication token",
@@ -119,7 +122,21 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Users can only access their own profile"""
-        return UserProfile.objects.filter(user=self.request.user)
+        # Handle schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return UserProfile.objects.none()
+        
+        # Handle case where request might be None
+        if not hasattr(self, 'request') or not self.request:
+            return UserProfile.objects.none()
+            
+        user = self.request.user
+        
+        # Handle anonymous user
+        if not user or not user.is_authenticated:
+            return UserProfile.objects.none()
+            
+        return UserProfile.objects.filter(user=user)
     
     def get_serializer_class(self):
         """Return appropriate serializer based on action"""
@@ -177,7 +194,21 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         """Users can only access their own information"""
-        return User.objects.filter(id=self.request.user.id)
+        # Handle schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return User.objects.none()
+        
+        # Handle case where request might be None
+        if not hasattr(self, 'request') or not self.request:
+            return User.objects.none()
+            
+        user = self.request.user
+        
+        # Handle anonymous user
+        if not user or not user.is_authenticated:
+            return User.objects.none()
+            
+        return User.objects.filter(id=user.id)
     
     serializer_class = UserSerializer
     

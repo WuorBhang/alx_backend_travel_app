@@ -32,7 +32,19 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter queryset based on user permissions"""
+        # Handle schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+        
+        # Handle case where request might be None
+        if not hasattr(self, 'request') or not self.request:
+            return Booking.objects.none()
+            
         user = self.request.user
+        
+        # Handle anonymous user
+        if not user or not user.is_authenticated:
+            return Booking.objects.none()
         
         if user.is_staff:
             # Staff can see all bookings
